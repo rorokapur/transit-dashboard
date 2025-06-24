@@ -1,6 +1,7 @@
 import React, {ReactHTMLElement, useState} from 'react';
 import logo from './logo.svg';
 import './App.css';
+import ArrivalDisplay from './ArrivalDisplay';
 
 interface AppProps {
 
@@ -14,6 +15,7 @@ const App: React.FC = (props: AppProps): React.JSX.Element => {
   return (
     <div>
       <p>Hello World!</p>
+      <ArrivalDisplay></ArrivalDisplay>
     </div>
   );
 }
