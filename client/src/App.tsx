@@ -13,9 +13,9 @@ interface AppState {
 const App: React.FC = (props: AppProps): React.JSX.Element => {
   const [state, setState] = useState<AppState>();
   return (
-    <div>
-      <p>Hello World!</p>
+    <div className='App'>
       <ArrivalDisplay></ArrivalDisplay>
+      <p>Hello World!</p>
     </div>
   );
 }

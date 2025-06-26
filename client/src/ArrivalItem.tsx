@@ -10,9 +10,9 @@ export interface ArrivalItemProps {
 const ArrivalItem: React.FC<ArrivalItemProps> = (props: ArrivalItemProps): React.JSX.Element => {
     return (
         <div className="AI">
-            <div style={{ backgroundColor: props.color }} className='route-id'><p>{props.routeId}</p></div>
+            <div style={{ backgroundColor: props.color }} className='route-id'><b>{props.routeId}</b></div>
             <div className='route-name'>{props.name}</div>
-            <div className='route-status'>{props.status}</div>
+            <div className='route-status'><b>{props.status}</b></div>
 
         </div>
     );
