@@ -1,7 +1,8 @@
 import React, { ComponentProps, ReactHTMLElement, useState, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Marker, Popup, useMapEvents, Tooltip } from 'react-leaflet';
 import L, { latLng, LatLngBounds, latLngBounds } from 'leaflet';
 import { NumberLiteralType, unescapeLeadingUnderscores } from 'typescript';
+import { TransitPositionData } from './transitdata';
 
 export interface MapBounds {
     x1: number;
@@ -18,10 +19,17 @@ export interface MapBoundControllerProps {
 export interface TransitMapProps {
     startBounds: MapBounds;
     onBoundsChange?: (bounds: MapBounds) => void;
+    vehiclePositions?: TransitPositionData;
 };
 
 const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JSX.Element => {
-    const items: React.JSX.Element[] = [];
+    const markers: React.JSX.Element[] = [];
+    console.log(props.vehiclePositions)
+    if(props.vehiclePositions !== undefined) {
+        for(const vehicle of props.vehiclePositions.vehicles) {
+            markers.push(<Marker position={[vehicle.position.latitude, vehicle.position.longitude]}><Tooltip>{vehicle.id}</Tooltip></Marker>)
+        }
+    }
     return (
         <MapContainer bounds={latLngBounds([latLng(props.startBounds.y1, props.startBounds.x1), latLng(props.startBounds.y2, props.startBounds.x2)])}>
             <TileLayer
@@ -29,6 +37,7 @@ const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JS
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <MapBoundController onBoundsChange={props.onBoundsChange}></MapBoundController>
+            {markers}
         </MapContainer>
     );
 }
@@ -38,7 +47,11 @@ const MapBoundController: React.FC<MapBoundControllerProps> = (props: MapBoundCo
     useEffect(() => {
         if (props.onBoundsChange) {
             const bounds: LatLngBounds = map.getBounds();
-            props.onBoundsChange({ y1: bounds.getNorth(), x1: bounds.getWest(), y2: bounds.getSouth(), x2: bounds.getEast() })
+            const y1 = bounds.getSouthWest().lat;
+            const x1 = bounds.getSouthWest().lng; 
+            const y2 = bounds.getNorthEast().lat;
+            const x2 = bounds.getNorthEast().lng; 
+            props.onBoundsChange({ y1: y1, x1: x1, y2: y2, x2: x2 })
         }
     }, []);
     useMapEvents({

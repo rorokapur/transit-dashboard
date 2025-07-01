@@ -80,7 +80,7 @@ export const vehiclePositionsInArea = (y1: number, x1: number, y2: number, x2: n
 
     const vehicles: TransitVehicle[] = [];
     for (const vehicle of pos.vehicles) {
-        if (vehicle.position.latitude >= y1 && vehicle.position.longitude >= x1 && vehicle.position.latitude <= y2 && vehicle.position.longitude <= x2) {
+        if (vehicle.position.latitude <= y1 && vehicle.position.longitude >= x1 && vehicle.position.latitude >= y2 && vehicle.position.longitude <= x2) {
             vehicles.push(vehicle);
         }
     }

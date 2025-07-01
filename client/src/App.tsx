@@ -2,11 +2,14 @@ import React, {ReactHTMLElement, useState} from 'react';
 import './App.css';
 import ArrivalDisplay from './ArrivalDisplay';
 import TransitMap, { MapBounds } from './TransitMap';
+import { isRecord } from './record';
+import { isTransitVehicle, TransitPositionData, TransitVehicle } from './transitdata'
 
 interface AppProps {
 };
 interface AppState {
   mapBounds: MapBounds;
+  vehiclePositions?: TransitPositionData;
 };
 
 const initialMapBounds = {
@@ -18,21 +21,64 @@ const initialMapBounds = {
 
 const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
   const [state, setState] = useState<AppState>({
-    mapBounds: initialMapBounds
+    mapBounds: initialMapBounds,
+
   });
 
   const onMapBoundsChange = (bounds: MapBounds) => {
     setState({mapBounds: bounds});
+    getVehiclePositions(bounds);
   }
 
+  const getVehiclePositions = (bounds: MapBounds) => {
+    const url = "/api/vehicles" +
+      "?y1=" + encodeURIComponent(bounds.y1.toFixed(6)) +
+      "&x1=" + encodeURIComponent(bounds.x1.toFixed(6)) +
+      "&y2=" + encodeURIComponent(bounds.y2.toFixed(6)) +
+      "&x2=" + encodeURIComponent(bounds.x2.toFixed(6));
+    fetch(url).then(doVehiclePositionsResp)
+      .catch(() => doVehiclePositionsError("could not connect to server!"))
+  }
+
+  const doVehiclePositionsResp = (res: Response) => {
+    if (res.status === 200) {
+      res.json().then(doVehiclePositionsJson)
+        .catch(() => doVehiclePositionsError("response is not valid json!"));
+    } else if (res.status === 400) {
+      res.text().then(doVehiclePositionsError)
+        .catch(() => doVehiclePositionsError("400 error response is not text!"));
+    } else {
+      doVehiclePositionsError(`error code ${res.status}`);
+    }
+  }
+
+  const doVehiclePositionsJson = (data: unknown) => {
+    if (!isRecord(data)) {
+      doVehiclePositionsError(`data is not a record!`);
+    } else if (typeof data.timestamp !== 'number') {
+      doVehiclePositionsError(`bad type for timestamp: ${typeof data.timestamp}`);
+    } else if (!Array.isArray(data.vehicles)) {
+      doVehiclePositionsError(`vehicle data is not an array!`);
+    } else {
+      const vehicles: TransitVehicle[] = [];
+      for (const vehicle of data.vehicles) {
+        if (isTransitVehicle(vehicle))
+          vehicles.push(vehicle)
+      }
+      setState({vehiclePositions: {timestamp:data.timestamp, vehicles: vehicles}, mapBounds: state.mapBounds});
+    }
+  }
+
+  const doVehiclePositionsError = (text: string) => {
+    alert("Error fetching /api/vehicles: " + text);
+  }
 
 
   return (
     <div className='App'>
       <ArrivalDisplay arrivalData={[{ routeId: "63", timeToArrival: 1, name: "Sand Point - East Green Lake" }, { routeId: "62", timeToArrival: 0, name: "Sand Point - East Green Lake" }, { routeId: "62", timeToArrival: 1, name: "Sand Point - East Green Lake" }]}></ArrivalDisplay>
-      <TransitMap startBounds={initialMapBounds} onBoundsChange={onMapBoundsChange}></TransitMap>
+      <TransitMap startBounds={initialMapBounds} onBoundsChange={onMapBoundsChange} vehiclePositions={state.vehiclePositions}></TransitMap>
     </div>
   );
 }
-
 export default App;
