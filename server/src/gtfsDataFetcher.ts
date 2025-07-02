@@ -1,5 +1,6 @@
 import { time } from 'console';
 import fetch from 'node-fetch';
+import { positionTestData } from './offlineTestData';
 
 interface gtfsJsonFeeds {
     pos: URL | undefined | null;
@@ -24,7 +25,8 @@ let alerts = null;
 
 export const updateRealtimeData = async (feeds: gtfsJsonFeeds) => {
     if (feeds.pos) {
-        const posJson = await fetchAndParseGtfsJson(feeds.pos);
+        //const posJson = await fetchAndParseGtfsJson(feeds.pos); disabled becuase offline
+        const posJson = positionTestData; // Use when working offline
         if (posJson) {
             try {
                 pos = await parsePosJson(posJson);
