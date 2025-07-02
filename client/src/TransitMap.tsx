@@ -24,10 +24,9 @@ export interface TransitMapProps {
 
 const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JSX.Element => {
     const markers: React.JSX.Element[] = [];
-    console.log(props.vehiclePositions)
     if(props.vehiclePositions !== undefined) {
         for(const vehicle of props.vehiclePositions.vehicles) {
-            markers.push(<Marker position={[vehicle.position.latitude, vehicle.position.longitude]}><Tooltip>{vehicle.id}</Tooltip></Marker>)
+            markers.push(<Marker position={[vehicle.position.latitude, vehicle.position.longitude]} key={vehicle.id}><Tooltip>{vehicle.id}</Tooltip></Marker>)
         }
     }
     return (
