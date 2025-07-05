@@ -37,13 +37,16 @@ const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JS
     });
 
     useEffect(() => {
-        const markers = new Set<React.JSX.Element>();
+        console.log(props.vehiclePositions)
+        
         if (props.vehiclePositions !== undefined) {
+            const markers = new Set<React.JSX.Element>();
             for (const vehicle of props.vehiclePositions.vehicles) {
                 markers.add(<Marker position={[vehicle.position.latitude, vehicle.position.longitude]} key={vehicle.id}><Tooltip>{vehicle.id}</Tooltip></Marker>)
             }
+            setState({ vehicles: markers, lastVehiclePositionUpdate: 0 });
         }
-        setState({ vehicles: markers, lastVehiclePositionUpdate: 0 });
+        
     }, [props.vehiclePositions])
     
     return (

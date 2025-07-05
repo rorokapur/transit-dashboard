@@ -26,7 +26,7 @@ const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
   });
 
   const onMapBoundsChange = (bounds: MapBounds) => {
-    setState({mapBounds: bounds});
+    setState({mapBounds: bounds, vehiclePositions: state.vehiclePositions});
     getVehiclePositions(bounds);
   }
 
