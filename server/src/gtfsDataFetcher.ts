@@ -25,8 +25,8 @@ let alerts = null;
 
 export const updateRealtimeData = async (feeds: gtfsJsonFeeds) => {
     if (feeds.pos) {
-        //const posJson = await fetchAndParseGtfsJson(feeds.pos); disabled becuase offline
-        const posJson = positionTestData; // Use when working offline
+        const posJson = await fetchAndParseGtfsJson(feeds.pos);
+        //const posJson = positionTestData; Use when working offline
         if (posJson) {
             try {
                 pos = await parsePosJson(posJson);
