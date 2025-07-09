@@ -3,13 +3,14 @@ import './App.css';
 import ArrivalDisplay from './ArrivalDisplay';
 import TransitMap, { MapBounds } from './TransitMap';
 import { isRecord } from './record';
-import { isTransitVehicle, TransitPositionData, TransitVehicle } from './transitdata'
+import {isTransitStopJson, isTransitVehicle, TransitPositionData, TransitStop, TransitVehicle } from './transitdata'
 
 interface AppProps {
 };
 interface AppState {
   mapBounds: MapBounds;
   vehiclePositions?: TransitPositionData;
+  stopLocations?: TransitStop[]; 
 };
 
 const initialMapBounds = {
@@ -25,9 +26,11 @@ const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
 
   });
 
-  const onMapBoundsChange = (bounds: MapBounds) => {
-    setState({mapBounds: bounds, vehiclePositions: state.vehiclePositions});
+  const onMapBoundsChange = (bounds: MapBounds, zoom: number) => {
+    setState({mapBounds: bounds, vehiclePositions: state.vehiclePositions, stopLocations: state.stopLocations});
     getVehiclePositions(bounds);
+    getStopLocations(bounds);
+    
   }
 
   const getVehiclePositions = (bounds: MapBounds) => {
@@ -73,11 +76,50 @@ const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
     alert("Error fetching /api/vehicles: " + text);
   }
 
+  const getStopLocations = (bounds: MapBounds) => {
+    const url = "/api/stops" +
+      "?y1=" + encodeURIComponent(bounds.y1.toFixed(6)) +
+      "&x1=" + encodeURIComponent(bounds.x1.toFixed(6)) +
+      "&y2=" + encodeURIComponent(bounds.y2.toFixed(6)) +
+      "&x2=" + encodeURIComponent(bounds.x2.toFixed(6));
+    fetch(url).then(doStopLocationsResp)
+      .catch(() => doStopLocationsError("could not connect to server!"))
+  }
+
+  const doStopLocationsResp = (res: Response) => {
+    if (res.status === 200) {
+      res.json().then(doStopLocationsJson)
+        .catch(() => doStopLocationsError("response is not valid json!"));
+    } else if (res.status === 400) {
+      res.text().then(doStopLocationsError)
+        .catch(() => doStopLocationsError("400 error response is not text!"));
+    } else {
+      doStopLocationsError(`error code ${res.status}`);
+    }
+  }
+
+  const doStopLocationsJson = (data: unknown) => {
+    if (!Array.isArray(data)) {
+      doStopLocationsError(`stop data is not an array!`);
+    } else {
+      const stops: TransitStop[] = [];
+      for (const stop of data) {
+        if (isTransitStopJson(stop))
+          stops.push({id: stop.id, code: stop.code, name: stop.name, position: {latitude: stop.lat, longitude: stop.lon}})
+      }
+      setState(state => ({...state, stopLocations: stops}));
+    }
+  }
+
+  const doStopLocationsError = (text: string) => {
+    alert("Error fetching /api/stops: " + text);
+  }
+
 
   return (
     <div className='App'>
       <ArrivalDisplay arrivalData={[{ routeId: "63", timeToArrival: 1, name: "Sand Point - East Green Lake" }, { routeId: "62", timeToArrival: 0, name: "Sand Point - East Green Lake" }, { routeId: "62", timeToArrival: 1, name: "Sand Point - East Green Lake" }]}></ArrivalDisplay>
-      <TransitMap startBounds={initialMapBounds} onBoundsChange={onMapBoundsChange} vehiclePositions={state.vehiclePositions}></TransitMap>
+      <TransitMap startBounds={initialMapBounds} onBoundsChange={onMapBoundsChange} vehiclePositions={state.vehiclePositions} stopLocations={state.stopLocations}></TransitMap>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import React, { ComponentProps, ReactHTMLElement, useState, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap, Marker, Popup, useMapEvents, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Marker, Circle, Popup, useMapEvents, Tooltip } from 'react-leaflet';
 import L, { latLng, LatLngBounds, latLngBounds } from 'leaflet';
 import { NumberLiteralType, unescapeLeadingUnderscores } from 'typescript';
-import { TransitPositionData } from './transitdata';
+import { TransitPositionData, TransitStop } from './transitdata';
 import { render } from '@testing-library/react';
+import { busIcon } from './markers';
 
 export interface MapBounds {
     x1: number;
@@ -14,40 +15,52 @@ export interface MapBounds {
 }
 
 export interface MapBoundControllerProps {
-    onBoundsChange?: (bounds: MapBounds) => void;
+    onBoundsChange?: (bounds: MapBounds, zoom: number) => void;
 }
 
 export interface TransitMapProps {
     startBounds: MapBounds;
-    onBoundsChange?: (bounds: MapBounds) => void;
+    onBoundsChange?: (bounds: MapBounds, zoom: number) => void;
     vehiclePositions?: TransitPositionData;
+    stopLocations?: TransitStop[];
 };
 
 interface TransitMapState {
     vehicles: Set<React.JSX.Element>;
+    stops: Set<React.JSX.Element>;
     lastVehiclePositionUpdate: number;
 }
 
 const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JSX.Element => {
-
     const [state, setState] = useState<TransitMapState>({
         vehicles: new Set<React.JSX.Element>(),
+        stops: new Set<React.JSX.Element>(),
         lastVehiclePositionUpdate: 0
     
     });
 
     useEffect(() => {
-        console.log(props.vehiclePositions)
-        
         if (props.vehiclePositions !== undefined) {
             const markers = new Set<React.JSX.Element>();
             for (const vehicle of props.vehiclePositions.vehicles) {
-                markers.add(<Marker position={[vehicle.position.latitude, vehicle.position.longitude]} key={vehicle.id}><Tooltip>{vehicle.id}</Tooltip></Marker>)
+                markers.add(<Marker position={[vehicle.position.latitude, vehicle.position.longitude]} key={vehicle.id} icon={busIcon}><Tooltip>{vehicle.id}</Tooltip></Marker>)
             }
-            setState({ vehicles: markers, lastVehiclePositionUpdate: 0 });
+            setState(state => ({...state, vehicles: markers}));
         }
         
     }, [props.vehiclePositions])
+
+    useEffect(() => {
+        if (props.stopLocations !== undefined) {
+            const markers = new Set<React.JSX.Element>();
+            for (const stop of props.stopLocations) {
+                //markers.add(<Marker position={[stop.position.latitude, stop.position.longitude]} key={stop.id}><Tooltip>{stop.name}</Tooltip></Marker>)
+                markers.add(<Circle center={[stop.position.latitude, stop.position.longitude]} radius={3} color="black" fillColor='white' fillOpacity={1} weight={4}><Tooltip>{stop.name}</Tooltip></Circle>);
+            }
+            setState(state => ({ ...state, stops: markers}));
+        }
+
+    }, [props.stopLocations])
     
     return (
         <MapContainer bounds={latLngBounds([latLng(props.startBounds.y1, props.startBounds.x1), latLng(props.startBounds.y2, props.startBounds.x2)])}>
@@ -56,6 +69,7 @@ const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JS
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <MapBoundController onBoundsChange={props.onBoundsChange}></MapBoundController>
+            {state.stops}
             {state.vehicles}
         </MapContainer>
     );
@@ -67,8 +81,7 @@ const MapBoundController: React.FC<MapBoundControllerProps> = (props: MapBoundCo
     const updateBounds = () => {
         if (props.onBoundsChange) {
             const bounds: LatLngBounds = map.getBounds();
-            console.log(bounds.getWest());
-            props.onBoundsChange({ y1: bounds.getNorth(), x1: bounds.getWest(), y2: bounds.getSouth(), x2: bounds.getEast() })
+            props.onBoundsChange({ y1: bounds.getNorth(), x1: bounds.getWest(), y2: bounds.getSouth(), x2: bounds.getEast() }, map.getZoom())
 
         }
     }
