@@ -50,7 +50,7 @@ const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JS
             />
             <MapBoundController onBoundsChange={props.onBoundsChange}></MapBoundController>
             {vehicleMarkers}
-            {stopMarkers}
+            {(stopMarkers.length < 500) ? stopMarkers : []}
         </MapContainer>
     );
 }
