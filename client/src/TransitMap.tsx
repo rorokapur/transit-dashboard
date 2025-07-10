@@ -25,43 +25,23 @@ export interface TransitMapProps {
     stopLocations?: TransitStop[];
 };
 
-interface TransitMapState {
-    vehicles: Set<React.JSX.Element>;
-    stops: Set<React.JSX.Element>;
-    lastVehiclePositionUpdate: number;
-}
-
 const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JSX.Element => {
-    const [state, setState] = useState<TransitMapState>({
-        vehicles: new Set<React.JSX.Element>(),
-        stops: new Set<React.JSX.Element>(),
-        lastVehiclePositionUpdate: 0
-    
-    });
 
-    useEffect(() => {
-        if (props.vehiclePositions !== undefined) {
-            const markers = new Set<React.JSX.Element>();
-            for (const vehicle of props.vehiclePositions.vehicles) {
-                markers.add(<Marker position={[vehicle.position.latitude, vehicle.position.longitude]} key={vehicle.id} icon={busIcon}><Tooltip>{vehicle.id}</Tooltip></Marker>)
-            }
-            setState(state => ({...state, vehicles: markers}));
-        }
-        
-    }, [props.vehiclePositions])
+    const vehicleMarkers = props.vehiclePositions
+        ? props.vehiclePositions.vehicles.map(vehicle =>
+            <Marker position={[vehicle.position.latitude, vehicle.position.longitude]} key={vehicle.id} icon={busIcon}>
+                <Tooltip>{vehicle.id}</Tooltip>
+            </Marker>
+        )
+        : [];
 
-    useEffect(() => {
-        if (props.stopLocations !== undefined) {
-            const markers = new Set<React.JSX.Element>();
-            for (const stop of props.stopLocations) {
-                //markers.add(<Marker position={[stop.position.latitude, stop.position.longitude]} key={stop.id}><Tooltip>{stop.name}</Tooltip></Marker>)
-                markers.add(<Circle center={[stop.position.latitude, stop.position.longitude]} radius={3} color="black" fillColor='white' fillOpacity={1} weight={4}><Tooltip>{stop.name}</Tooltip></Circle>);
-            }
-            setState(state => ({ ...state, stops: markers}));
-        }
-
-    }, [props.stopLocations])
-    
+    const stopMarkers = props.stopLocations
+        ? props.stopLocations.map(stop =>
+            <Circle center={[stop.position.latitude, stop.position.longitude]} radius={3} color="black" fillColor="white" fillOpacity={1} weight={4} key={stop.id}>
+                <Tooltip>{stop.name}</Tooltip>
+            </Circle>
+        )
+        : [];
     return (
         <MapContainer bounds={latLngBounds([latLng(props.startBounds.y1, props.startBounds.x1), latLng(props.startBounds.y2, props.startBounds.x2)])}>
             <TileLayer
@@ -69,8 +49,8 @@ const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JS
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <MapBoundController onBoundsChange={props.onBoundsChange}></MapBoundController>
-            {state.stops}
-            {state.vehicles}
+            {vehicleMarkers}
+            {stopMarkers}
         </MapContainer>
     );
 }

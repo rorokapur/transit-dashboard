@@ -26,6 +26,7 @@ export interface TransitStop {
     position: { latitude: number, longitude: number };
 }
 
+
 export function isTransitVehicle(value: unknown): value is TransitVehicle {
     return isRecord(value) 
     && typeof value.id === 'string' 

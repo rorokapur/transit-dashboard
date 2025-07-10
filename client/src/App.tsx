@@ -27,7 +27,7 @@ const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
   });
 
   const onMapBoundsChange = (bounds: MapBounds, zoom: number) => {
-    setState({mapBounds: bounds, vehiclePositions: state.vehiclePositions, stopLocations: state.stopLocations});
+    setState(state => ({...state, mapBounds: bounds}));
     getVehiclePositions(bounds);
     getStopLocations(bounds);
     
@@ -68,7 +68,8 @@ const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
         if (isTransitVehicle(vehicle))
           vehicles.push(vehicle)
       }
-      setState({vehiclePositions: {timestamp:data.timestamp, vehicles: vehicles}, mapBounds: state.mapBounds});
+      const whyIsntThisANumber: number = data.timestamp;
+      setState(state => ({...state, vehiclePositions: {timestamp: whyIsntThisANumber, vehicles: vehicles}, mapBounds: state.mapBounds}));
     }
   }
 
