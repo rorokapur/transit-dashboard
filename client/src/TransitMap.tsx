@@ -1,8 +1,8 @@
-import React, { ComponentProps, ReactHTMLElement, useState, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap, Marker, Circle, Popup, useMapEvents, Tooltip } from 'react-leaflet';
+import React, { ComponentProps, ReactHTMLElement, useState, useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, useMap, Marker, Circle, Popup, useMapEvents, Tooltip, Polyline } from 'react-leaflet';
 import L, { latLng, LatLngBounds, latLngBounds } from 'leaflet';
 import { NumberLiteralType, unescapeLeadingUnderscores } from 'typescript';
-import { TransitPositionData, TransitStop } from './transitdata';
+import { routeIdToHexColor, TransitPositionData, TransitRoutePath, TransitStop } from './transitdata';
 import { render } from '@testing-library/react';
 import { busIcon } from './markers';
 
@@ -23,25 +23,47 @@ export interface TransitMapProps {
     onBoundsChange?: (bounds: MapBounds, zoom: number) => void;
     vehiclePositions?: TransitPositionData;
     stopLocations?: TransitStop[];
+    routePaths?: TransitRoutePath[];
 };
 
 const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JSX.Element => {
 
-    const vehicleMarkers = props.vehiclePositions
-        ? props.vehiclePositions.vehicles.map(vehicle =>
-            <Marker position={[vehicle.position.latitude, vehicle.position.longitude]} key={vehicle.id} icon={busIcon}>
-                <Tooltip>{vehicle.id}</Tooltip>
-            </Marker>
-        )
-        : [];
+    const vehicleMarkers = useMemo(() =>
+        props.vehiclePositions
+            ? props.vehiclePositions.vehicles.map(vehicle =>
+                <Marker position={[vehicle.position.latitude, vehicle.position.longitude]} key={vehicle.id} icon={busIcon}>
+                    <Tooltip>{vehicle.id}</Tooltip>
+                </Marker>
+            )
+            : [],
+        [props.vehiclePositions]
+    );
 
-    const stopMarkers = props.stopLocations
-        ? props.stopLocations.map(stop =>
-            <Circle center={[stop.position.latitude, stop.position.longitude]} radius={3} color="black" fillColor="white" fillOpacity={1} weight={4} key={stop.id}>
-                <Tooltip>{stop.name}</Tooltip>
-            </Circle>
-        )
-        : [];
+    const stopMarkers = useMemo(() =>
+        props.stopLocations
+            ? props.stopLocations.map(stop =>
+                <Circle center={[stop.position.latitude, stop.position.longitude]} radius={3} color="black" fillColor="white" fillOpacity={1} weight={4} key={stop.id}>
+                    <Tooltip>{stop.name}</Tooltip>
+                </Circle>
+            )
+            : [],
+        [props.stopLocations]
+    ); 
+    
+    const routePaths = useMemo(
+        () =>
+            props.routePaths
+                ? props.routePaths.map(route =>
+                    <Polyline
+                        positions={route.points}
+                        pathOptions={{ color: routeIdToHexColor(route.id) }}
+                        key={route.id}
+                    />
+                )
+                : [],
+        [props.routePaths]
+    );
+
     return (
         <MapContainer bounds={latLngBounds([latLng(props.startBounds.y1, props.startBounds.x1), latLng(props.startBounds.y2, props.startBounds.x2)])}>
             <TileLayer
@@ -50,7 +72,8 @@ const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JS
             />
             <MapBoundController onBoundsChange={props.onBoundsChange}></MapBoundController>
             {vehicleMarkers}
-            {(stopMarkers.length < 500) ? stopMarkers : []}
+            {(stopMarkers.length < 50) ? stopMarkers : []}
+            {routePaths}
         </MapContainer>
     );
 }

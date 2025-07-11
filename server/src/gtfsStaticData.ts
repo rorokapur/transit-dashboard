@@ -3,7 +3,7 @@ import { readFile } from "fs/promises";
 
 let stops: TransitStop[] | undefined = undefined;
 let routes: TransitRoute[] | undefined = undefined;
-let shapes: Map<string, TransitRouteShape> | undefined = undefined;
+let shapes: TransitRouteShape[] | undefined = undefined;
 
 export const loadStops = async (path: string) => {
     try {
@@ -29,23 +29,28 @@ export const loadStops = async (path: string) => {
 
 export const loadRouteShapes = async (path: string) => {
     try {
-        if (!shapes) {
-            shapes = new Map();
-        }
+        const map: Map<string, TransitRouteShape> = new Map();
         const data = await readFile(path, 'utf-8');
         const split = data.split("\n");
         split.splice(0, 1);
         for (const line of split) {
             const cols = line.split(",");
             try{
-                if (shapes.has(cols[0])) {
-                    shapes.get(cols[0])?.points.push({lat: Number(cols[1]), lon: Number(cols[2]), seq: Number(cols[3])})
+                if (map.has(cols[0])) {
+                    map.get(cols[0])?.points.push({seq: Number(cols[3]), pos: [Number(cols[1]),Number(cols[2])]});
                 } else {
-                    shapes.set(cols[0], {id: cols[0], points: [{lat: Number(cols[1]), lon: Number(cols[2]), seq: Number(cols[3])}]})
+                    map.set(cols[0], {id: cols[0], points: [{seq: Number(cols[3]), pos: [Number(cols[1]),Number(cols[2])]}]})
                 }
             } catch {
                 console.error(`Skipping malformed row: ${line}`)
             }
+        }
+        shapes = [...map.values()].sort();
+        for(const route of shapes) {
+            route.points.sort((a,b)=> {
+                return a.seq - b.seq;
+            })
+            console.log(route.points);
         }
         console.log("Loaded route shapes")
     } catch (err) {
@@ -84,7 +89,7 @@ interface TransitRoute {
 
 interface TransitRouteShape {
     id: string;
-    points: {seq: number, lat: number, lon: number}[];
+    points: {seq: number, pos: [lat: number, lon: number]}[];
 }
 
 export const stopsInArea = (y1: number, x1: number, y2: number, x2: number): TransitStop[] => {
@@ -100,4 +105,19 @@ export const stopsInArea = (y1: number, x1: number, y2: number, x2: number): Tra
     }
 
     return present;
+}
+
+export const routeSegmentsInArea = (y1: number, x1: number, y2: number, x2: number) => {
+    if (!shapes) {
+        return [];
+    }
+    const result = []
+    for (const route of shapes) {
+        const arr = [];
+        for(const point of route.points) {
+            arr.push(point.pos);
+        }
+        result.push({id: route.id, points: arr})
+    }
+    return result;
 }
