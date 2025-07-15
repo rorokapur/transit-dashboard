@@ -114,10 +114,29 @@ export const routeSegmentsInArea = (y1: number, x1: number, y2: number, x2: numb
     const result = []
     for (const route of shapes) {
         const arr = [];
+        let sub = [];
+        let prev = undefined;
         for(const point of route.points) {
-            arr.push(point.pos);
+            if(point.pos[0] <= y1 && point.pos[1] >= x1 && point.pos[0] >= y2 && point.pos[1] <= x2 && prev !== undefined){
+                sub.push(prev);
+                sub.push(point.pos);
+                prev = undefined;
+            } else {
+                if (sub.length > 1) {
+                    sub.push(point.pos);
+                    arr.push(sub);
+                }
+                sub = [];
+                prev = point.pos;
+            }
         }
-        result.push({id: route.id, points: arr})
+        if (sub.length > 1) {
+            arr.push(sub);
+        }
+        if(arr.length > 0) {
+            result.push({id: route.id, points: arr});
+        }
+        
     }
     return result;
 }

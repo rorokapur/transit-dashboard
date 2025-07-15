@@ -1,4 +1,4 @@
-import React, {ReactHTMLElement, useState} from 'react';
+import React, {ReactHTMLElement, useEffect, useState} from 'react';
 import './App.css';
 import ArrivalDisplay from './ArrivalDisplay';
 import TransitMap, { MapBounds } from './TransitMap';
@@ -9,6 +9,7 @@ interface AppProps {
 };
 interface AppState {
   mapBounds: MapBounds;
+  dataArea: MapBounds;
   vehiclePositions?: TransitPositionData;
   stopLocations?: TransitStop[]; 
   routePaths?: TransitRoutePath[];
@@ -24,14 +25,19 @@ const initialMapBounds = {
 const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
   const [state, setState] = useState<AppState>({
     mapBounds: initialMapBounds,
+    dataArea: initialMapBounds
 
   });
 
   const onMapBoundsChange = (bounds: MapBounds, zoom: number) => {
-    setState(state => ({...state, mapBounds: bounds}));
     getVehiclePositions(bounds);
     getStopLocations(bounds);
-    getRoutePaths(bounds);
+    if(!(bounds.y1 <= state.dataArea.y1 && bounds.x1 >= state.dataArea.x1 && bounds.y2 >= state.dataArea.y2 && bounds.x2 <= state.dataArea.x2)) {
+      getRoutePaths(bounds);
+      setState(state => ({ ...state, dataArea: bounds, mapBounds: bounds}));
+    } else {
+      setState(state => ({ ...state, mapBounds: bounds }));
+    }
     
   }
 

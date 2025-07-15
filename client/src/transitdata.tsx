@@ -52,13 +52,18 @@ export function isTransitRoutePathJson(value: unknown) {
         || !Array.isArray(value.points)) {
             return false;
     }
-    for(const point of value.points) {
-        if(!Array.isArray(point)) {
+    for(const section of value.points){
+        if(!Array.isArray(section)) {
             return false;
         }
-        for(const part of point) {
-            if (typeof part !== "number") {
+        for (const point of section) {
+            if (!Array.isArray(point)) {
                 return false;
+            }
+            for (const part of point) {
+                if (typeof part !== "number") {
+                    return false;
+                }
             }
         }
     }

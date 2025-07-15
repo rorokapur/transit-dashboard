@@ -56,7 +56,7 @@ const TransitMap: React.FC<TransitMapProps> = (props: TransitMapProps): React.JS
                 ? props.routePaths.map(route =>
                     <Polyline
                         positions={route.points}
-                        pathOptions={{ color: routeIdToHexColor(route.id) }}
+                        pathOptions={{ color: routeIdToHexColor(route.id), opacity: 1, weight: 5 , lineJoin: 'bevel' }}
                         key={route.id}
                     />
                 )
