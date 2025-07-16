@@ -13,6 +13,7 @@ interface AppState {
   vehiclePositions?: TransitPositionData;
   stopLocations?: TransitStop[]; 
   routePaths?: TransitRoutePath[];
+  vehicleInterval?: ReturnType<typeof setInterval>;
 };
 
 const initialMapBounds = {
@@ -26,19 +27,29 @@ const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
   const [state, setState] = useState<AppState>({
     mapBounds: initialMapBounds,
     dataArea: initialMapBounds
-
   });
 
   const onMapBoundsChange = (bounds: MapBounds, zoom: number) => {
     getVehiclePositions(bounds);
-    getStopLocations(bounds);
     if(!(bounds.y1 <= state.dataArea.y1 && bounds.x1 >= state.dataArea.x1 && bounds.y2 >= state.dataArea.y2 && bounds.x2 <= state.dataArea.x2)) {
       getRoutePaths(bounds);
+      getStopLocations(bounds);
       setState(state => ({ ...state, dataArea: bounds, mapBounds: bounds}));
     } else {
       setState(state => ({ ...state, mapBounds: bounds }));
     }
     
+  }
+
+  const getVehiclePositionsOnInterval = () => {
+    console.log(state.vehiclePositions?.timestamp)
+    if(state.vehiclePositions?.timestamp !== undefined) {
+      setTimeout(getVehiclePositionsOnInterval, (35 - (Date.now() - state.vehiclePositions.timestamp)) * 1000);
+      console.log(35 - (Date.now() - state.vehiclePositions.timestamp) * 1000)
+    } else {
+      setTimeout(getVehiclePositionsOnInterval, 15000);
+    }
+    getVehiclePositions(state.mapBounds)
   }
 
   const getVehiclePositions = (bounds: MapBounds) => {
@@ -164,6 +175,10 @@ const App: React.FC<AppProps> = (props: AppProps): React.JSX.Element => {
   const doRoutePathsError = (text: string) => {
     alert("Error fetching /api/stops: " + text);
   }
+
+  useEffect(() => {
+    getVehiclePositionsOnInterval();
+  }, []);
 
   return (
     <div className='App'>
