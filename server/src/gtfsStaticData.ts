@@ -2,7 +2,7 @@ import { readFile } from "fs/promises";
 
 
 let stops: TransitStop[] | undefined = undefined;
-let routes: TransitRoute[] | undefined = undefined;
+let routes: Map<string, TransitRoute> | undefined = undefined;
 let shapes: TransitRouteShape[] | undefined = undefined;
 
 export const loadStops = async (path: string) => {
@@ -29,6 +29,9 @@ export const loadStops = async (path: string) => {
 
 export const loadRouteShapes = async (path: string) => {
     try {
+        if(!shapes) {
+            shapes = [];
+        }
         const map: Map<string, TransitRouteShape> = new Map();
         const data = await readFile(path, 'utf-8');
         const split = data.split("\n");
@@ -45,19 +48,43 @@ export const loadRouteShapes = async (path: string) => {
                 console.error(`Skipping malformed row: ${line}`)
             }
         }
-        shapes = [...map.values()].sort();
+        shapes = shapes.concat([...map.values()].sort());
         for(const route of shapes) {
             route.points.sort((a,b)=> {
                 return a.seq - b.seq;
             })
-            console.log(route.points);
         }
         console.log("Loaded route shapes")
     } catch (err) {
-        console.log("Could not load route shapes. Proceeding without this data!")
+        console.log("Could not load route shapes. Proceeding without this data!");
     }
 }
 
+export const loadRoutes = async (path: string) => {
+    try{
+        if(!routes) {
+            routes = new Map();
+        }
+        const data = await readFile(path, 'utf-8');
+        const split = data.split("\n");
+        split.splice(0, 1);
+        for (const line of split) {
+            const cols = line.split(",");
+            try{
+                const key = cols[2].replace(/\"/g, "");
+                if(routes.has(key)) {
+                    throw Error("duplicate route found!")
+                }
+                routes.set(key, {id: cols[0], agency_id: cols[1], short_name: cols[2].replace(/\"/g, ""), desc: cols[4].replace(/\"/g, "")});
+            } catch {
+                console.error(`Skipping malformed row: ${line}`)
+            }
+        }
+        console.log("Loaded stop locations");
+    } catch {
+        console.log("Could not load routes. Proceeding without this data!");
+    }
+}
 
 interface TransitStop {
     id: string;
@@ -73,6 +100,7 @@ interface TransitStop {
     parent_station?: string;
     timezone?: string;
     wheelchair_boarding?: number;
+    routes?: {id: string, direction: string}[];
 }
 
 interface TransitRoute {
