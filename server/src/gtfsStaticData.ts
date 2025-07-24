@@ -4,6 +4,7 @@ import { readFile } from "fs/promises";
 let stops: TransitStop[] | undefined = undefined;
 let routes: Map<string, TransitRoute> | undefined = undefined;
 let shapes: TransitRouteShape[] | undefined = undefined;
+let trips: Map<string, TransitTrip> | undefined = undefined;
 
 export const loadStops = async (path: string) => {
     try {
@@ -71,11 +72,11 @@ export const loadRoutes = async (path: string) => {
         for (const line of split) {
             const cols = line.split(",");
             try{
-                const key = cols[2].replace(/\"/g, "");
+                const key = cols[0];
                 if(routes.has(key)) {
                     throw Error("duplicate route found!")
                 }
-                routes.set(key, {id: cols[0], agency_id: cols[1], short_name: cols[2].replace(/\"/g, ""), desc: cols[4].replace(/\"/g, "")});
+                routes.set(key, {id: cols[0], agency_id: cols[1], short_name: cols[2].replace(/\"/g, ""), desc: cols[4].replace(/\"/g, ""), trip_ids: []});
             } catch {
                 console.error(`Skipping malformed row: ${line}`)
             }
@@ -83,6 +84,40 @@ export const loadRoutes = async (path: string) => {
         console.log("Loaded stop locations");
     } catch {
         console.log("Could not load routes. Proceeding without this data!");
+    }
+}
+
+export const loadTrips = async (path: string) => {
+    try {
+        if(!routes) {
+            console.warn("Warning: loading trips before routes means you cannot lookup the trips for a given route!")
+        }
+        if(!trips) {
+            trips = new Map();
+        }
+        const data = await readFile(path, 'utf-8');
+        const split = data.split("\n");
+        split.splice(0, 1);
+        for (const line of split) {
+            const cols = line.split(",");
+            try{
+                const key = cols[2];
+                if(trips.has(key)) {
+                    throw Error("duplicate trip found, skipping!")
+                }
+                trips.set(key, {route_id: cols[0], trip_id: cols[2], headsign: cols[3].replace(/\"/g, ""), direction: cols[5], stops: []});
+                if(routes && routes.has(cols[0])) {
+                    routes.get(cols[0])?.trip_ids?.push(key);
+                }
+                
+            } catch {
+                console.error(`Skipping malformed row: ${line}`)
+            }
+        }
+        console.log("Loaded trips");
+    } catch (err) {
+        console.error(err);
+        console.log("Could not load trips. Proceeding without this data!")
     }
 }
 
@@ -113,6 +148,23 @@ interface TransitRoute {
     url?: string;
     color?: string;
     text_color?: string;
+    trip_ids?: string[];
+}
+
+interface TransitTrip {
+    route_id: string;
+    service_id?: string;
+    trip_id: string;
+    direction: string;
+    headsign?: string;
+    stops?: TransitStopTime[];
+}
+
+interface TransitStopTime {
+    arrival_time: string;
+    departure_time: string;
+    stop_id: string;
+    stop_sequence: number;
 }
 
 interface TransitRouteShape {

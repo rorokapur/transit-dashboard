@@ -1,9 +1,7 @@
-import React, { ComponentProps, ReactHTMLElement, useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, useMap, Marker, Circle, Popup, useMapEvents, Tooltip, Polyline } from 'react-leaflet';
-import L, { latLng, LatLngBounds, latLngBounds } from 'leaflet';
-import { NumberLiteralType, unescapeLeadingUnderscores } from 'typescript';
+import React, { useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, useMap, Marker, Circle, useMapEvents, Tooltip, Polyline } from 'react-leaflet';
+import { latLng, LatLngBounds, latLngBounds } from 'leaflet';
 import { routeIdToHexColor, TransitPositionData, TransitRoutePath, TransitStop } from './transitdata';
-import { render } from '@testing-library/react';
 import { busIcon } from './markers';
 
 export interface MapBounds {
