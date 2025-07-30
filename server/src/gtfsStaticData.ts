@@ -1,4 +1,5 @@
 import { readFile } from "fs/promises";
+import { TransitRoute, TransitRouteShape, TransitStop, TransitTrip } from "./types/static.gtfs.types";
 
 
 let stops: TransitStop[] | undefined = undefined;
@@ -119,57 +120,6 @@ export const loadTrips = async (path: string) => {
         console.error(err);
         console.log("Could not load trips. Proceeding without this data!")
     }
-}
-
-interface TransitStop {
-    id: string;
-    code?: string;
-    name?: string;
-    tts_name?: string;
-    desc?: string;
-    lat: number;
-    lon: number;
-    zone_id?: string;
-    stop_url?: string;
-    location_type?: string;
-    parent_station?: string;
-    timezone?: string;
-    wheelchair_boarding?: number;
-    routes?: {id: string, direction: string}[];
-}
-
-interface TransitRoute {
-    id: string;
-    agency_id: string;
-    short_name: string;
-    long_name?: string;
-    desc: string;
-    type?: string;
-    url?: string;
-    color?: string;
-    text_color?: string;
-    trip_ids?: string[];
-}
-
-interface TransitTrip {
-    route_id: string;
-    service_id?: string;
-    trip_id: string;
-    direction: string;
-    headsign?: string;
-    stops?: TransitStopTime[];
-}
-
-interface TransitStopTime {
-    arrival_time: string;
-    departure_time: string;
-    stop_id: string;
-    stop_sequence: number;
-}
-
-interface TransitRouteShape {
-    id: string;
-    points: {seq: number, pos: [lat: number, lon: number]}[];
 }
 
 export const stopsInArea = (y1: number, x1: number, y2: number, x2: number): TransitStop[] => {
