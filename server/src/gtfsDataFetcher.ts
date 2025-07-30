@@ -1,23 +1,5 @@
-import { time } from 'console';
 import fetch from 'node-fetch';
-import { positionTestData } from './offlineTestData';
-
-interface gtfsJsonFeeds {
-    pos: URL | undefined | null;
-    updates: URL | undefined | null;
-    alerts: URL | undefined | null;
-}
-
-interface TransitPositionData {
-    timestamp: number;
-    vehicles: TransitVehicle[];
-}
-
-interface TransitVehicle {
-    id: string;
-    position: {latitude: number, longitude: number};
-
-}
+import { gtfsJsonFeeds, TransitPositionData, TransitVehicle } from './types/realtime.gtfs.types';
 
 let pos: TransitPositionData | null = null;
 let updates = null;
